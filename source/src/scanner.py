@@ -32,6 +32,24 @@ def validate_count(count):
         print("Error: The packet count must be a positive, non-zero integer.")
         sys.exit(1)
 
+def validate_arguments(expected_args):
+    # known_args are the expected argument flags like --interface, --filter, --count
+    known_args = expected_args
+
+    # Check for too many arguments (beyond the expected number)
+    if len(sys.argv) > len(known_args) * 2 + 1:  # Each argument has a flag and a value
+        print(f"Error: Too many arguments. Expected {len(known_args)} arguments.")
+        sys.exit(1)
+
+    # Check for any unknown arguments (arguments that aren't in the expected list)
+    for arg in sys.argv[1:]:
+        if arg.startswith('--') and arg.split('=')[0] not in known_args:
+            print(f"Error: Unrecognized argument '{arg}'.")
+            sys.exit(1)
+
+
+
+
 # core logic functions 
 
 def parse_ethernet_header(hex_data):
@@ -51,6 +69,10 @@ def parse_ethernet_header(hex_data):
 
 # ARP Header Parsing
 def parse_arp_header(hex_data):
+    if len(hex_data) < 56:
+        print(f"Error: ARP packet is too short. Expected at least 28 bytes.")
+        sys.exit(1) 
+
     hardware_type = int(hex_data[28:32], 16)
     protocol_type = int(hex_data[32:36], 16)
     hardware_size = int(hex_data[36:38], 16)
@@ -174,9 +196,9 @@ def capture_packets(interface, capture_filter, packet_count):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 7:
-        print(f"Error: Incorrect number of arguments. Expected 6 arguments, but you entered {len(sys.argv) - 1}.")
-        sys.exit(1)
+
+    expected_args = ['--interface', '--filter', '--count']
+    validate_arguments(expected_args)
 
     parser = argparse.ArgumentParser(description='Packet Sniffer')
     parser.add_argument('--interface', required=True, help='Network interface to sniff packets')
