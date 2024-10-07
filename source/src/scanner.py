@@ -12,6 +12,10 @@ def to_binary(value, length=8):
     return bin(value)[2:].zfill(length)
 
 def validate_interface(interface):
+    if not interface.strip():  
+        print("Error: The network interface cannot be an empty string.")
+        sys.exit(1)
+
     try:
         with open(f"/sys/class/net/{interface}/operstate") as f:
             state = f.read().strip()
@@ -28,16 +32,21 @@ def validate_filter(capture_filter):
         sys.exit(1)
 
 def validate_count(count):
+    max_count=100
     if count <= 0:
         print("Error: The packet count must be a positive, non-zero integer.")
         sys.exit(1)
+    if count > max_count:
+        print(f"Error: The packet count exceeds the maximum allowed limit of {max_count}.")
+        sys.exit(1)
+
 
 def validate_arguments(expected_args):
     # known_args are the expected argument flags like --interface, --filter, --count
     known_args = expected_args
 
     # Check for too many arguments (beyond the expected number)
-    if len(sys.argv) > len(known_args) * 2 + 1:  # Each argument has a flag and a value
+    if len(sys.argv) > (len(known_args) * 2) + 1:  # Each argument has a flag and a value
         print(f"Error: Too many arguments. Expected {len(known_args)} arguments.")
         sys.exit(1)
 
@@ -71,7 +80,7 @@ def parse_ethernet_header(hex_data):
 def parse_arp_header(hex_data):
     if len(hex_data) < 56:
         print(f"Error: ARP packet is too short. Expected at least 28 bytes.")
-        sys.exit(1) 
+        return
 
     hardware_type = int(hex_data[28:32], 16)
     protocol_type = int(hex_data[32:36], 16)
@@ -102,6 +111,10 @@ def parse_arp_header(hex_data):
 
 # IPv4 Header Parsing
 def parse_ipv4_header(hex_data):
+    if len(hex_data) < 40:  
+        print(f"Error: IPv4 packet is too short. Expected at least 20 bytes.")
+        return
+
     version_ihl = int(hex_data[28:30], 16)
     version = version_ihl >> 4
     ihl = version_ihl & 0x0F
@@ -134,6 +147,10 @@ def parse_ipv4_header(hex_data):
 
 # TCP Header Parsing
 def parse_tcp_header(hex_data):
+    if len(hex_data) < 94:  
+        print(f"Error: TCP packet is too short. Expected at least 20 bytes.")
+        return
+
     src_port = int(hex_data[68:72], 16)
     dst_port = int(hex_data[72:76], 16)
     sequence_number = int(hex_data[76:84], 16)
@@ -148,6 +165,10 @@ def parse_tcp_header(hex_data):
 
 # UDP Header Parsing
 def parse_udp_header(hex_data):
+    if len(hex_data) < 84:  
+        print(f"Error: UDP packet is too short. Expected at least 8 bytes.")
+        return
+
     src_port = int(hex_data[68:72], 16)
     dst_port = int(hex_data[72:76], 16)
     length = int(hex_data[76:80], 16)
@@ -160,6 +181,10 @@ def parse_udp_header(hex_data):
 
 # Function to handle each captured packet
 def packet_callback(packet):
+    if not packet:
+        print("Error: Received an empty or null packet.")
+        return
+
     # Convert the raw packet to hex format
     raw_data = bytes(packet)
     hex_data = raw_data.hex()
