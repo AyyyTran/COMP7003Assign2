@@ -56,6 +56,10 @@ def validate_arguments(expected_args):
             print(f"Error: Unrecognized argument '{arg}'.")
             sys.exit(1)
 
+def check_privileges():
+    if os.geteuid() != 0:
+        print("Error: This program requires root privileges to capture packets. Please run with 'sudo'.")
+        sys.exit(1)
 
 
 
@@ -221,7 +225,7 @@ def capture_packets(interface, capture_filter, packet_count):
 
 
 if __name__ == "__main__":
-
+    check_privileges()  
     expected_args = ['--interface', '--filter', '--count']
     validate_arguments(expected_args)
 
