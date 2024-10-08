@@ -47,7 +47,7 @@ def validate_arguments(expected_args):
 
     # Check for too many arguments (beyond the expected number)
     if len(sys.argv) > (len(known_args) * 2) + 1:  # Each argument has a flag and a value
-        print(f"Error: Too many arguments. Expected {len(known_args)} arguments.")
+        print(f"Error: Too many arguments.")
         sys.exit(1)
 
     # Check for any unknown arguments (arguments that aren't in the expected list)
